@@ -4,19 +4,23 @@
 #include<string.h>
 #include<stdlib.h>
 #include<unistd.h>
-#include<sys/wait.h>
-#include<sys/types.h>
-#include <sys/stat.h>
+//#include<sys/wait.h>
+//#include<sys/types.h>
+//#include <sys/stat.h>
 #include <fcntl.h>
 
 void closeFiles(int fd1, int fd2) {
     if (close(fd1) < 0) {
-        perror("close first file failed");
-        exit(1);
+        if (write(2,"Error in: close\n",strlen("Error in: close\n")) < 0) {
+            exit(-1);
+        }
+        exit(-1);
     }
     if (close(fd2) < 0) {
-        perror("close second file failed");
-        exit(1);
+        if (write(2,"Error in: close\n",strlen("Error in: close\n")) < 0) {
+            exit(-1);
+        }
+        exit(-1);
     }
 }
 
@@ -28,36 +32,51 @@ int main(int argc, char *argv[]) {
     int x1;
     int x2;
     if (argc < 3) {
-        printf("Insufficient Arguments!!!\n");
-        printf("Please use \"program-name file-name1 file-name2\" format.\n");
-        exit(1);
+        if (write(2,"Insufficient Arguments!!!\n",strlen("Insufficient Arguments!!!\n")) < 0) {
+            return -1;
+        }
+        if (write(2,"Please use \"program-name file-name1 file-name2\" format.\n",
+                  strlen("Please use \"program-name file-name1 file-name2\" format.\n")) < 0) {
+            return -1;
+        }
+        return -1;
     }
     fd1 = open(argv[1], 'r');
     if (fd1 < 0) {
-        perror("open first file failed");
-        exit(1);
+        if (write(2,"Error in: open\n",strlen("Error in: open\n")) < 0) {
+            return -1;
+        }
+        return -1;
     }
     fd2 = open(argv[2], 'r');
     if (fd2 < 0) {
-        perror("open second file failed");
-        if (close(fd1) < 0) {
-            perror("close first file failed");
-            exit(1);
+        if (write(2,"Error in: open\n",strlen("Error in: open\n")) < 0) {
+            return -1;
         }
-        exit(1);
+        if (close(fd1) < 0) {
+            if (write(2,"Error in: close\n",strlen("Error in: close\n")) < 0) {
+                return -1;
+            }
+            return -1;
+        }
+        return -1;
     }
     while (1) {
         x1 = read(fd1, &ch1, 1);
         if (x1 < 0) {
-            perror("read first file failed");
+            if (write(2,"Error in: read\n",strlen("Error in: read\n")) < 0) {
+                return -1;
+            }
             closeFiles(fd1, fd2);
-            exit(1);
+            return -1;
         }
         x2 = read(fd2, &ch2, 1);
         if (x2 < 0) {
-            perror("read second file failed");
+            if (write(2,"Error in: read\n",strlen("Error in: read\n")) < 0) {
+                return -1;
+            }
             closeFiles(fd1, fd2);
-            exit(1);
+            return -1;
         }
         if (x1 == 0 && x2 == 0) {
             closeFiles(fd1, fd2);
@@ -70,30 +89,40 @@ int main(int argc, char *argv[]) {
     closeFiles(fd1, fd2);
     fd1 = open(argv[1], 'r');
     if (fd1 < 0) {
-        perror("open first file failed");
-        exit(1);
+        if (write(2,"Error in: open\n",strlen("Error in: open\n")) < 0) {
+            return -1;
+        }
+        return -1;
     }
     fd2 = open(argv[2], 'r');
     if (fd2 < 0) {
-        perror("open second file failed");
-        if (close(fd1) < 0) {
-            perror("close first file failed");
-            exit(1);
+        if (write(2,"Error in: open\n",strlen("Error in: open\n")) < 0) {
+            return -1;
         }
-        exit(1);
+        if (close(fd1) < 0) {
+            if (write(2,"Error in: close\n",strlen("Error in: close\n")) < 0) {
+                return -1;
+            }
+            return -1;
+        }
+        return -1;
     }
     while (1) {
         x1 = read(fd1, &ch1, 1);
         if (x1 < 0) {
-            perror("read first file failed");
+            if (write(2,"Error in: read\n",strlen("Error in: read\n")) < 0) {
+                return -1;
+            }
             closeFiles(fd1, fd2);
-            exit(1);
+            return -1;
         }
         x2 = read(fd2, &ch2, 1);
         if (x2 < 0) {
-            perror("read second file failed");
+            if (write(2,"Error in: read\n",strlen("Error in: read\n")) < 0) {
+                return -1;
+            }
             closeFiles(fd1, fd2);
-            exit(1);
+            return -1;
         }
         if (x1 == 0 && x2 == 0) {
             closeFiles(fd1, fd2);
@@ -105,17 +134,21 @@ int main(int argc, char *argv[]) {
         while ((ch1 == ' ') || (ch1 == '\n')) {
             x1 = read(fd1, &ch1, 1);
             if (x1 < 0) {
-                perror("read first file failed");
+                if (write(2,"Error in: read\n",strlen("Error in: read\n")) < 0) {
+                    return -1;
+                }
                 closeFiles(fd1, fd2);
-                exit(1);
+                return -1;
             }
         }
         while ((ch2 == ' ') || (ch2 == '\n')) {
             x2 = read(fd2, &ch2, 1);
             if (x2 < 0) {
-                perror("read second file failed");
+                if (write(2,"Error in: read\n",strlen("Error in: read\n")) < 0) {
+                    return -1;
+                }
                 closeFiles(fd1, fd2);
-                exit(1);
+                return -1;
             }
         }
         if ((ch1 >= 65 && ch1 <= 90) && (ch2 >= 97 && ch2 <= 122)) {
