@@ -82,6 +82,9 @@ int main(int argc, char *argv[]) {
             closeFiles(fd1, fd2);
             return 1;
         }
+        if (x1 == 0 || x2 == 0) {
+            break;
+        }
         if (ch1 != ch2) {
             break;
         }
@@ -124,14 +127,7 @@ int main(int argc, char *argv[]) {
             closeFiles(fd1, fd2);
             return -1;
         }
-        if (x1 == 0 && x2 == 0) {
-            closeFiles(fd1, fd2);
-            return 3;
-        }
-        if (ch1 == ch2) {
-            continue;
-        }
-        while ((ch1 == ' ') || (ch1 == '\n')) {
+        while ((ch1 == ' ') || (ch1 == '\n') || (ch1 == '\r')) {
             x1 = read(fd1, &ch1, 1);
             if (x1 < 0) {
                 if (write(2,"Error in: read\n",strlen("Error in: read\n")) < 0) {
@@ -140,8 +136,11 @@ int main(int argc, char *argv[]) {
                 closeFiles(fd1, fd2);
                 return -1;
             }
+            if (x1 == 0) {
+                break;
+            }
         }
-        while ((ch2 == ' ') || (ch2 == '\n')) {
+        while ((ch2 == ' ') || (ch2 == '\n') || (ch2 == '\r')) {
             x2 = read(fd2, &ch2, 1);
             if (x2 < 0) {
                 if (write(2,"Error in: read\n",strlen("Error in: read\n")) < 0) {
@@ -150,6 +149,20 @@ int main(int argc, char *argv[]) {
                 closeFiles(fd1, fd2);
                 return -1;
             }
+            if (x2 == 0) {
+                break;
+            }
+        }
+        if (x1 == 0 && x2 == 0) {
+            closeFiles(fd1, fd2);
+            return 3;
+        }
+        if (x1 == 0 || x2 == 0) {
+            closeFiles(fd1, fd2);
+            return 2;
+        }
+        if (ch1 == ch2) {
+            continue;
         }
         if ((ch1 >= 65 && ch1 <= 90) && (ch2 >= 97 && ch2 <= 122)) {
             if ((ch1 + 32) == ch2) {
