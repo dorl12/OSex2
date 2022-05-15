@@ -19,18 +19,19 @@ void checkArgs(int argc) {
     }
 }
 
-void openFirstFile(int fd1, char *argv[]) {
-    fd1 = open(argv[1], 'r');
+int openFirstFile(char *argv[]) {
+    int fd1 = open(argv[1], 'r');
     if (fd1 < 0) {
         if (write(2,"Error in: open\n",strlen("Error in: open\n")) < 0) {
             exit(-1);
         }
         exit(-1);
     }
+    return fd1;
 }
 
-void openSecondFile(int fd1, int fd2, char *argv[]) {
-    fd2 = open(argv[2], 'r');
+int openSecondFile(int fd1, char *argv[]) {
+    int fd2 = open(argv[2], 'r');
     if (fd2 < 0) {
         if (write(2,"Error in: open\n",strlen("Error in: open\n")) < 0) {
             if (close(fd1) < 0) {
@@ -49,6 +50,7 @@ void openSecondFile(int fd1, int fd2, char *argv[]) {
         }
         exit(-1);
     }
+    return fd2;
 }
 
 void closeFiles(int fd1, int fd2) {
@@ -66,7 +68,9 @@ void closeFiles(int fd1, int fd2) {
     }
 }
 
-int checkIdentical(int fd1, int fd2, char ch1, char ch2, int x1, int x2) {
+int checkIdentical(int fd1, int fd2) {
+    int x1, x2;
+    char ch1, ch2;
     while (1) {
         x1 = read(fd1, &ch1, 1);
         if (x1 < 0) {
@@ -100,25 +104,9 @@ int checkIdentical(int fd1, int fd2, char ch1, char ch2, int x1, int x2) {
     return 0;
 }
 
-int spaceCase(int fd1, int fd2, int x, char ch) {
-    while ((ch == ' ') || (ch == '\n') || (ch == '\r')) {
-        x = read(fd1, &ch, 1);
-        if (x < 0) {
-            if (write(2,"Error in: read\n",strlen("Error in: read\n")) < 0) {
-                closeFiles(fd1, fd2);
-                exit(-1);
-            }
-            closeFiles(fd1, fd2);
-            exit(-1);
-        }
-        if (x == 0) {
-            break;
-        }
-    }
-    return x;
-}
-
-int checkSimOrDif(int fd1, int fd2, char ch1, char ch2, int x1, int x2) {
+int checkSimOrDif(int fd1, int fd2) {
+    int x1, x2;
+    char ch1, ch2;
     while (1) {
         x1 = read(fd1, &ch1, 1);
         if (x1 < 0) {
@@ -138,8 +126,34 @@ int checkSimOrDif(int fd1, int fd2, char ch1, char ch2, int x1, int x2) {
             closeFiles(fd1, fd2);
             exit(-1);
         }
-        x1 = spaceCase(fd1, fd2, x1, ch1);
-        x2 = spaceCase(fd1, fd2, x2, ch2);
+        while ((ch1 == ' ') || (ch1 == '\n') || (ch1 == '\r')) {
+            x1 = read(fd1, &ch1, 1);
+            if (x1 < 0) {
+                if (write(2,"Error in: read\n",strlen("Error in: read\n")) < 0) {
+                    closeFiles(fd1, fd2);
+                    exit(-1);
+                }
+                closeFiles(fd1, fd2);
+                exit(-1);
+            }
+            if (x1 == 0) {
+                break;
+            }
+        }
+        while ((ch2 == ' ') || (ch2 == '\n') || (ch2 == '\r')) {
+            x2 = read(fd2, &ch2, 1);
+            if (x2 < 0) {
+                if (write(2,"Error in: read\n",strlen("Error in: read\n")) < 0) {
+                    closeFiles(fd1, fd2);
+                    exit(-1);
+                }
+                closeFiles(fd1, fd2);
+                exit(-1);
+            }
+            if (x2 == 0) {
+                break;
+            }
+        }
         if (x1 == 0 && x2 == 0) {
             closeFiles(fd1, fd2);
             return 3;
@@ -173,22 +187,16 @@ int checkSimOrDif(int fd1, int fd2, char ch1, char ch2, int x1, int x2) {
 }
 
 int main(int argc, char *argv[]) {
-    int fd1;
-    int fd2;
-    char ch1;
-    char ch2;
-    int x1;
-    int x2;
     checkArgs(argc);
-    openFirstFile(fd1, argv);
-    openSecondFile(fd1, fd2, argv);
-    if (checkIdentical(fd1, fd2, ch1, ch2, x1, x2) == 1) {
+    int fd1 = openFirstFile(argv);
+    int fd2 = openSecondFile(fd1, argv);
+    if (checkIdentical(fd1, fd2) == 1) {
         return 1;
     }
     closeFiles(fd1, fd2);
-    openFirstFile(fd1, argv);
-    openSecondFile(fd1, fd2, argv);
-    if (checkSimOrDif(fd1, fd2, ch1, ch2, x1, x2) == 2) {
+    fd1 = openFirstFile(argv);
+    fd2 = openSecondFile(fd1, argv);
+    if (checkSimOrDif(fd1, fd2) == 2) {
         return 2;
     }
     return 3;
