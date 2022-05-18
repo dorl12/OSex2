@@ -37,38 +37,18 @@ int openErrorsFile(int gradesFile) {
     int errorsFile = open("errors.txt", O_CREAT | O_RDWR, 0666);
     if (errorsFile < 0) {
         if (write(2, "Error in: open\n", strlen("Error in: open\n")) < 0) {
-            if (close(gradesFile) < 0) {
-                if (write(2,"Error in: close\n",strlen("Error in: close\n")) < 0) {
-                    exit(-1);
-                }
-                exit(-1);
-            }
+            close(gradesFile);
             exit(-1);
         }
-        if (close(gradesFile) < 0) {
-            if (write(2,"Error in: close\n",strlen("Error in: close\n")) < 0) {
-                exit(-1);
-            }
-            exit(-1);
-        }
+        close(gradesFile);
         exit(-1);
     }
     return errorsFile;
 }
 
 void closeFiles(int gradesFile, int errorsFile) {
-    if (close(gradesFile) < 0) {
-        if (write(2,"Error in: close\n",strlen("Error in: close\n")) < 0) {
-            exit(-1);
-        }
-        exit(-1);
-    }
-    if (close(errorsFile) < 0) {
-        if (write(2,"Error in: close\n",strlen("Error in: close\n")) < 0) {
-            exit(-1);
-        }
-        exit(-1);
-    }
+    close(gradesFile);
+    close(errorsFile);
 }
 
 void parseConfFile(char *argv[], int confFile, int gradesFile, int errorsFile, char confLines[3][150]) {
@@ -78,7 +58,7 @@ void parseConfFile(char *argv[], int confFile, int gradesFile, int errorsFile, c
             closeFiles(gradesFile, errorsFile);
             exit(-1);
         }
-        close(gradesFile);
+        closeFiles(gradesFile, errorsFile);
         exit(-1);
     }
     char buff[450];
@@ -119,17 +99,17 @@ int isDirectory(char* path) {
 
 void checkConfFileLines(int gradesFile, int errorsFile, char confLines[3][150]) {
     if (!isDirectory(confLines[0])) {
-        write(STDOUT_FILENO, "Not a valid directory\n", strlen("Not a valid directory\n"));
+        write(2, "Not a valid directory\n", strlen("Not a valid directory\n"));
         closeFiles(gradesFile, errorsFile);
         exit(-1);
     }
     if (!isFile(confLines[1])) {
-        write(STDOUT_FILENO, "Input file not exist\n", strlen("Input file not exist\n"));
+        write(2, "Input file does not exist\n", strlen("Input file not exist\n"));
         closeFiles(gradesFile, errorsFile);
         exit(-1);
     }
     if (!isFile(confLines[2])) {
-        write(STDOUT_FILENO, "Output file not exist\n", strlen("Output file not exist\n"));
+        write(2, "Output file does not exist\n", strlen("Output file not exist\n"));
         closeFiles(gradesFile, errorsFile);
         exit(-1);
     }
@@ -146,9 +126,10 @@ int compileCFile(pid_t pid, char exeName[150], char mainFolder[150], char userNa
         exit(-1);
     }
     else if (pid == 0) {
+        dup2(errorsFile, 2);
         char *gccArgs[] = {"gcc", "-o", exeName, mainFolder, NULL};
         if(execvp(gccArgs[0], gccArgs)) {
-            if (write(2,"execvp 1 failed\n",strlen("execvp failed\n")) < 0) {
+            if (write(2,"Error in: execvp\n",strlen("Error in: execvp\n")) < 0) {
                 closeFiles(gradesFile, errorsFile);
                 exit(-1);
             }
@@ -200,6 +181,7 @@ void runExeFile(pid_t pid, char confLines[3][150], char exeName[150], int grades
         exit(-1);
     }
     else if (pid == 0) {
+        dup2(errorsFile, 2);
         dup2(inputFile, 0);
         dup2(outputFile, 1);
         char runExeFile[150];
@@ -207,7 +189,7 @@ void runExeFile(pid_t pid, char confLines[3][150], char exeName[150], int grades
         strcat(runExeFile, exeName);
         char *runExeArgs[] = {runExeFile, NULL};
         if(execvp(runExeArgs[0], runExeArgs)) {
-            if (write(2,"execvp 2 failed\n",strlen("execvp failed\n")) < 0) {
+            if (write(2,"Error in: execvp\n",strlen("Error in: execvp\n")) < 0) {
                 closeFiles(gradesFile, errorsFile);
                 exit(-1);
             }
@@ -237,9 +219,10 @@ void deleteExeFiles(pid_t pid, char exeName[150], int gradesFile, int errorsFile
         exit(-1);
     }
     else if (pid == 0) {
+        dup2(errorsFile, 2);
         char *deleteExeFile[] = {"rm", exeName, NULL};
         if(execvp(deleteExeFile[0], deleteExeFile)) {
-            if (write(2,"execvp 3 failed\n",strlen("execvp failed\n")) < 0) {
+            if (write(2,"Error in: execvp\n",strlen("Error in: execvp\n")) < 0) {
                 closeFiles(gradesFile, errorsFile);
                 exit(-1);
             }
@@ -267,9 +250,10 @@ void compFiles(pid_t pid, char confLines[3][150], int gradesFile, int errorsFile
         exit(-1);
     }
     else if (pid == 0) {
+        dup2(errorsFile, 2);
         char *compOutput[] = {"./comp.out", "./output.txt", confLines[2], NULL};
         if(execvp(compOutput[0], compOutput)) {
-            if (write(2,"execvp 4 failed\n",strlen("execvp 4 failed\n")) < 0) {
+            if (write(2,"Error in: execvp\n",strlen("Error in: execvp\n")) < 0) {
                 closeFiles(gradesFile, errorsFile);
                 exit(-1);
             }
@@ -277,7 +261,7 @@ void compFiles(pid_t pid, char confLines[3][150], int gradesFile, int errorsFile
     }
     int status;
     if(waitpid(pid, &status, 0) < 0) {
-        if (write(2,"Error in: waitpid 4\n",strlen("Error in: waitpid 4\n")) < 0) {
+        if (write(2,"Error in: waitpid\n",strlen("Error in: waitpid\n")) < 0) {
             closeFiles(gradesFile, errorsFile);
             exit(-1);
         }
@@ -314,17 +298,31 @@ void compFiles(pid_t pid, char confLines[3][150], int gradesFile, int errorsFile
 void deleteOutputFile(pid_t pid, int gradesFile, int errorsFile) {
     pid = fork();
     if(pid == -1) {
-        perror("fork failed");
+        if (write(2,"Error in: fork\n",strlen("Error in: fork\n")) < 0) {
+            closeFiles(gradesFile, errorsFile);
+            exit(-1);
+        }
+        closeFiles(gradesFile, errorsFile);
+        exit(-1);
     }
     else if (pid == 0) {
+        dup2(errorsFile, 2);
         char *deleteOutput[] = {"rm", "output.txt", NULL};
         if(execvp(deleteOutput[0], deleteOutput)) {
-            perror("execvp failed");
+            if (write(2,"Error in: execvp\n",strlen("Error in: execvp\n")) < 0) {
+                closeFiles(gradesFile, errorsFile);
+                exit(-1);
+            }
         }
     }
     int status;
     if(waitpid(pid, &status, 0) < 0) {
-        perror("waitpid failed");
+        if (write(2,"Error in: waitpid\n",strlen("Error in: waitpid\n")) < 0) {
+            closeFiles(gradesFile, errorsFile);
+            exit(-1);
+        }
+        closeFiles(gradesFile, errorsFile);
+        exit(-1);
     }
 }
 
@@ -398,7 +396,6 @@ int main(int argc, char *argv[]) {
     checkArgs(argc);
     int gradesFile = openGradesFile();
     int errorsFile = openErrorsFile(gradesFile);
-    dup2(errorsFile, 2);
     int confFile;
     char confLines[3][150];
     parseConfFile(argv, confFile, gradesFile, errorsFile, confLines);
