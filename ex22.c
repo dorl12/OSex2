@@ -104,12 +104,12 @@ void checkConfFileLines(int gradesFile, int errorsFile, char confLines[3][150]) 
         exit(-1);
     }
     if (!isFile(confLines[1])) {
-        write(2, "Input file does not exist\n", strlen("Input file not exist\n"));
+        write(2, "Input file not exist\n", strlen("Input file not exist\n"));
         closeFiles(gradesFile, errorsFile);
         exit(-1);
     }
     if (!isFile(confLines[2])) {
-        write(2, "Output file does not exist\n", strlen("Output file not exist\n"));
+        write(2, "Output file not exist\n", strlen("Output file not exist\n"));
         closeFiles(gradesFile, errorsFile);
         exit(-1);
     }
